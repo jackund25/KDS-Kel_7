@@ -1,0 +1,2 @@
+data/simulated_metagenomic_reads.fastq filter=lfs diff=lfs merge=lfs -text
+data/genom_referensi/*.fna filter=lfs diff=lfs merge=lfs -text
