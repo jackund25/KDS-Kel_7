@@ -2,6 +2,7 @@ import random
 from Bio import SeqIO
 from collections import Counter
 import os # Untuk cek keberadaan file dan membuat direktori
+import matplotlib.pyplot as plt
 
 # --- Konfigurasi Proyek ---
 # Direktori untuk menyimpan file-file data
@@ -9,7 +10,6 @@ DATA_DIR = "data"
 GENOME_REF_DIR = os.path.join(DATA_DIR, "genom_referensi")
 
 # Path ke file FASTA genom referensi yang sudah kamu unduh
-# PASTIKAN PATH INI SESUAI DENGAN LOKASI FILE DI KOMPUTERMU!
 REFERENCE_GENOMES_INFO = [
     (os.path.join(GENOME_REF_DIR, "GCF_001308065.1_ASM130806v1_genomic.fna"), "Escherichia coli"), 
     (os.path.join(GENOME_REF_DIR, "GCF_001302645.1_ASM130264v1_genomic.fna"), "Lactobacillus plantarum") 
@@ -169,39 +169,85 @@ def classify_reads(fastq_file, kmer_db, k_size):
 
 def calculate_abundance(read_classifications):
     """
-    Menghitung dan menampilkan proporsi komunitas mikroba.
+    Menghitung dan menampilkan proporsi komunitas mikroba,
+    serta menghasilkan grafik visualisasinya.
     """
     total_classified_reads = 0
     final_species_counts = Counter()
 
     for species in read_classifications:
-        if species not in ["Unclassified", "Too_Short_Read"]: 
+        if species not in ["Unclassified", "Too_Short_Read"]:
             final_species_counts[species] += 1
             total_classified_reads += 1
-    
+
     print("\n--- Komposisi Komunitas Mikroba ---")
     if total_classified_reads == 0:
         print("Tidak ada reads yang berhasil diklasifikasikan ke spesies yang dikenal.")
+        # Jika tidak ada reads terklasifikasi, tidak perlu lanjutkan ke visualisasi
         return
 
     # Tampilkan hasil dalam urutan kelimpahan tertinggi
     for species, count in final_species_counts.most_common():
         percentage = (count / total_classified_reads) * 100
         print(f"- {species}: {count} reads ({percentage:.2f}%)")
-    
+
     unclassified_count = read_classifications.count("Unclassified")
     too_short_count = read_classifications.count("Too_Short_Read")
-    
+
     total_reads_in_sample = len(read_classifications)
-    if total_reads_in_sample > 0:
+    if total_reads_in_sample > 0: # Pastikan ada reads yang diproses sama sekali
         unclassified_percentage = (unclassified_count / total_reads_in_sample) * 100
         too_short_percentage = (too_short_count / total_reads_in_sample) * 100
         classified_percentage = (total_classified_reads / total_reads_in_sample) * 100
-        
+
         print(f"\nTotal reads diproses: {total_reads_in_sample}")
         print(f"Reads berhasil terklasifikasi: {total_classified_reads} ({classified_percentage:.2f}%)")
         print(f"Reads tidak terklasifikasi: {unclassified_count} ({unclassified_percentage:.2f}%)")
         print(f"Reads terlalu pendek: {too_short_count} ({too_short_percentage:.2f}%)")
+
+    # --- BAGIAN UNTUK VISUALISASI ---
+    # Bagian ini menggunakan hasil perhitungan di atas, TIDAK MENGULANGI PERHITUNGAN
+    if total_classified_reads > 0:
+        species_names = []
+        percentages = []
+
+        for species, count in final_species_counts.most_common():
+            species_names.append(species)
+            percentages.append((count / total_classified_reads) * 100)
+
+        # Grafik Bar Chart untuk Spesies Terklasifikasi
+        plt.figure(figsize=(12, 7))
+        plt.bar(species_names, percentages, color='skyblue')
+        plt.xlabel("Spesies Mikroba")
+        plt.ylabel("Kelimpahan Relatif (%)")
+        plt.title("Komposisi Komunitas Mikroba (Hanya Terklasifikasi)")
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
+        plt.savefig(os.path.join(DATA_DIR, "microbe_abundance_barchart_classified.png"))
+        # plt.show()
+
+        # Grafik Pie Chart untuk Distribusi Keseluruhan (Termasuk Unclassified/Too Short)
+        pie_labels = species_names[:]
+        pie_sizes = percentages[:]
+
+        if unclassified_count > 0:
+            pie_labels.append("Unclassified")
+            pie_sizes.append((unclassified_count / total_reads_in_sample) * 100)
+
+        if too_short_count > 0:
+            pie_labels.append("Too Short Reads")
+            pie_sizes.append((too_short_count / total_reads_in_sample) * 100)
+
+        # Hanya buat pie chart jika ada data untuk ditampilkan (terklasifikasi, unclassified, atau too short)
+        if sum(pie_sizes) > 0:
+            plt.figure(figsize=(9, 9))
+            plt.pie(pie_sizes, labels=pie_labels, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
+            plt.title("Distribusi Keseluruhan Reads Metagenomik")
+            plt.axis('equal')
+            plt.tight_layout()
+            plt.savefig(os.path.join(DATA_DIR, "microbe_abundance_piechart_overall.png"))
+            # plt.show()
+    # --- AKHIR BAGIAN VISUALISASI ---
 
 # --- Main Program ---
 if __name__ == "__main__":
