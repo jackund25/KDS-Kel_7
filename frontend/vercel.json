@@ -1,14 +1,12 @@
 {
-  "builds": [
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+  "version": 2,
+  "public": true,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/upload", "destination": "/upload.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/result", "destination": "/result.html" }
   ]
 }
