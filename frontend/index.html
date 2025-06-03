@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metagenomik Classifier - Microbial Classification Tool</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-dna"></i>
+                <span>MetaClassify</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="login.html" class="nav-link">Login</a>
+                <a href="upload.html" class="btn btn-primary">Start Analysis</a>
+            </div>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        Classify <span class="highlight">Microbial Communities</span> 
+                        with Advanced K-mer Analysis
+                    </h1>
+                    <p class="hero-description">
+                        Upload your FASTA files and get detailed microbial classification results 
+                        using cutting-edge bioinformatics algorithms. Fast, accurate, and reliable 
+                        metagenomic analysis at your fingertips.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="upload.html" class="btn btn-primary btn-large">
+                            <i class="fas fa-upload"></i>
+                            Start Classification
+                        </a>
+                        <a href="#features" class="btn btn-secondary btn-large">
+                            <i class="fas fa-info-circle"></i>
+                            Learn More
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">10K+</span>
+                            <span class="stat-label">Files Processed</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">99.5%</span>
+                            <span class="stat-label">Accuracy Rate</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">< 5min</span>
+                            <span class="stat-label">Average Processing</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="dna-animation">
+                        <div class="dna-strand">
+                            <div class="nucleotide a"></div>
+                            <div class="nucleotide t"></div>
+                            <div class="nucleotide g"></div>
+                            <div class="nucleotide c"></div>
+                        </div>
+                        <div class="floating-elements">
+                            <div class="element element-1">ATCG</div>
+                            <div class="element element-2">GCTA</div>
+                            <div class="element element-3">TAGC</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-description">
+                    Advanced bioinformatics tools designed for researchers and professionals
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="feature-title">Lightning Fast</h3>
+                    <p class="feature-description">
+                        K-mer based classification algorithm processes your data in minutes, 
+                        not hours. Optimized for speed and efficiency.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="feature-title">High Accuracy</h3>
+                    <p class="feature-description">
+                        Advanced matching algorithms ensure precise species identification 
+                        with detailed abundance estimation.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="feature-title">Rich Visualizations</h3>
+                    <p class="feature-description">
+                        Interactive charts and graphs help you understand your microbial 
+                        community composition at a glance.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <h3 class="feature-title">Cloud Processing</h3>
+                    <p class="feature-description">
+                        No installation required. Process your files directly in the browser 
+                        with our cloud-based infrastructure.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3 class="feature-title">Export Results</h3>
+                    <p class="feature-description">
+                        Download your results in multiple formats including JSON, CSV, 
+                        and publication-ready reports.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Secure & Private</h3>
+                    <p class="feature-description">
+                        Your data is processed securely and deleted after analysis. 
+                        Optional account for result storage.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-description">
+                    Simple 3-step process to get your microbial classification results
+                </p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Upload FASTA File</h3>
+                        <p class="step-description">
+                            Upload your metagenomic sequencing data in FASTA format. 
+                            We support files up to 50MB.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">AI Processing</h3>
+                        <p class="step-description">
+                            Our K-mer based algorithm analyzes your sequences against 
+                            our comprehensive microbial database.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Get Results</h3>
+                        <p class="step-description">
+                            Receive detailed classification results with species 
+                            identification and abundance estimates.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">Ready to Analyze Your Microbiome?</h2>
+                <p class="cta-description">
+                    Join researchers worldwide who trust our platform for accurate microbial classification
+                </p>
+                <div class="cta-buttons">
+                    <a href="upload.html" class="btn btn-primary btn-large">
+                        <i class="fas fa-rocket"></i>
+                        Start Free Analysis
+                    </a>
+                    <a href="register.html" class="btn btn-outline btn-large">
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-dna"></i>
+                        <span>MetaClassify</span>
+                    </div>
+                    <p class="footer-description">
+                        Advanced metagenomic classification tool developed by 
+                        Kelompok 7 K-04 for IF3211 Domain-Specific Computation.
+                    </p>
+                </div>
+                <div class="footer-section">
+                    <h3 class="footer-title">Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="upload.html">Upload File</a></li>
+                        <li><a href="login.html">Login</a></li>
+                        <li><a href="register.html">Register</a></li>
+                        <li><a href="#features">Features</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3 class="footer-title">Team</h3>
+                    <ul class="footer-links">
+                        <li>Daffari Adiyatma</li>
+                        <li>Benedicta Eryka Santosa</li>
+                        <li>Dahayu Ramaniya Aurasindu</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3 class="footer-title">Contact</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-envelope"></i> team@metaclassify.com</li>
+                        <li><i class="fas fa-university"></i> Institut Teknologi Bandung</li>
+                        <li><i class="fas fa-code"></i> IF3211 Project</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 MetaClassify - Kelompok 7 K-04. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
