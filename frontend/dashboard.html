@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - MetaClassify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-dna"></i>
+                <span>MetaClassify</span>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="login.html" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-section">
+        <div class="container">
+            <h1 class="section-title">Your Classification Results</h1>
+
+            <div class="results-grid" id="resultsContainer">
+                <!-- Results cards injected by JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title">Results Preview</h2>
+            <ul class="modal-list">
+                <li>• Taxonomic classification table</li>
+                <li>• Confidence scores</li>
+                <li>• Interactive visualizations</li>
+                <li>• Quality metrics</li>
+            </ul>
+            <p class="modal-note">In a real implementation, this would open in a new window or modal with real data.</p>
+        </div>
+    </div>
+
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

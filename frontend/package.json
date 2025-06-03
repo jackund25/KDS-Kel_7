@@ -1,0 +1,9 @@
+{
+  "name": "metagenomik-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx http-server -p 3001 -o",
+    "build": "echo 'No build step needed for vanilla JS'",
+    "deploy": "vercel --prod"
+  }
+}
