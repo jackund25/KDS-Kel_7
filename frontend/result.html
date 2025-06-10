@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classification Result - MetaClassify</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/result.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <a href="index.html"><i class="fas fa-dna"></i> <span>MetaClassify</span></a>
+    </div>
+    <div class="nav-menu">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="upload.html" class="nav-link">Upload</a>
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="login.html" class="btn btn-outline">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Result Section -->
+<section class="result-section">
+  <div class="container">
+    <h1 class="section-title">Classification Result</h1>
+
+    <div class="result-meta">
+      <p><strong>File:</strong> <span id="fileName">sample.fasta</span></p>
+      <p><strong>Uploaded:</strong> <span id="uploadDate">2025-06-03</span></p>
+      <p><strong>K-mer Size:</strong> <span id="kmerSize">21</span></p>
+      <p><strong>Confidence Threshold:</strong> <span id="confidence">0.85</span></p>
+    </div>
+
+    <div class="result-table-container">
+      <h3>Taxonomic Classification Table</h3>
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Taxon</th>
+            <th>Rank</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="classificationTable">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-container">
+      <h3>Confidence Distribution</h3>
+      <canvas id="confidenceChart"></canvas>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-outline" onclick="window.history.back()">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-success" id="downloadBtn">
+        <i class="fas fa-download"></i> Download Results
+      </button>
+      <button class="btn btn-primary" id="saveBtn">
+        <i class="fas fa-save"></i> Save to Account
+      </button>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="assets/js/result.js"></script>
+</body>
+</html>

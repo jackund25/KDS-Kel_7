@@ -1,8 +1,8 @@
 // File: assets/js/auth.js
 
 // Ganti dengan URL dan anon key dari proyek Supabase kamu
-const SUPABASE_URL = 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+const SUPABASE_URL = 'https://xywdcpalbpbaefxihgkh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5d2RjcGFsYnBiYWVmeGloZ2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5NTg1OTUsImV4cCI6MjA2NDUzNDU5NX0.PgUyJfin0tgPrfPUYdPgR68RSgChZWvUTK__QDSLrgQ';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Helper: tampilkan loading
