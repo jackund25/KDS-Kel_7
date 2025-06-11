@@ -1,16 +1,16 @@
-// ==============================================
-// Upload Page JavaScript
-// ==============================================
-
+// upload.js - FASTA File Upload and Analysis Handler
 class UploadManager {
     constructor() {
-        this.selectedFiles = [];
+        this.uploadedFiles = [];
+        this.analysisResults = null;
         this.isAnalyzing = false;
-        this.progressInterval = null;
         
+        // Initialize elements
         this.initializeElements();
         this.bindEvents();
         this.setupDragAndDrop();
+        
+        console.log('UploadManager initialized');
     }
 
     initializeElements() {
@@ -26,8 +26,8 @@ class UploadManager {
         this.progressSection = document.getElementById('progressSection');
         this.progressFill = document.getElementById('progressFill');
         this.progressPercent = document.getElementById('progressPercent');
-        this.progressTime = document.getElementById('progressTime');
         this.progressStatus = document.getElementById('progressStatus');
+        this.progressTime = document.getElementById('progressTime');
         
         // Results elements
         this.resultsSection = document.getElementById('resultsSection');
@@ -42,6 +42,10 @@ class UploadManager {
         this.saveBtn = document.getElementById('saveBtn');
         this.continueWithoutLoginBtn = document.getElementById('continueWithoutLoginBtn');
         
+        // Toast elements
+        this.errorToast = document.getElementById('errorToast');
+        this.successToast = document.getElementById('successToast');
+        
         // Progress steps
         this.progressSteps = {
             step1: document.getElementById('step1'),
@@ -49,10 +53,6 @@ class UploadManager {
             step3: document.getElementById('step3'),
             step4: document.getElementById('step4')
         };
-        
-        // Toast elements
-        this.errorToast = document.getElementById('errorToast');
-        this.successToast = document.getElementById('successToast');
     }
 
     bindEvents() {
@@ -60,10 +60,14 @@ class UploadManager {
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         
         // Upload area click
-        this.uploadArea.addEventListener('click', () => this.fileInput.click());
+        this.uploadArea.addEventListener('click', () => {
+            if (!this.isAnalyzing) {
+                this.fileInput.click();
+            }
+        });
         
         // Browse text click
-        const browseText = document.querySelector('.browse-text');
+        const browseText = this.uploadArea.querySelector('.browse-text');
         if (browseText) {
             browseText.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -71,18 +75,18 @@ class UploadManager {
             });
         }
         
-        // Action buttons
+        // Button events
         this.clearBtn?.addEventListener('click', () => this.clearFiles());
         this.analyzeBtn?.addEventListener('click', () => this.startAnalysis());
         this.previewBtn?.addEventListener('click', () => this.previewResults());
         this.downloadBtn?.addEventListener('click', () => this.downloadResults());
-        this.saveBtn?.addEventListener('click', () => this.saveResults());
-        this.continueWithoutLoginBtn?.addEventListener('click', () => this.continueWithoutLogin());
+        this.saveBtn?.addEventListener('click', () => this.showLoginPrompt());
+        this.continueWithoutLoginBtn?.addEventListener('click', () => this.hideLoginPrompt());
         
-        // Toast close buttons
+        // Toast close events
         document.querySelectorAll('.toast-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.target.closest('.toast').classList.remove('show');
+                e.currentTarget.closest('.toast').classList.remove('show');
             });
         });
     }
@@ -113,11 +117,11 @@ class UploadManager {
     }
 
     highlight() {
-        this.uploadArea.classList.add('dragover');
+        this.uploadArea.classList.add('drag-over');
     }
 
     unhighlight() {
-        this.uploadArea.classList.remove('dragover');
+        this.uploadArea.classList.remove('drag-over');
     }
 
     handleDrop(e) {
@@ -132,109 +136,579 @@ class UploadManager {
     }
 
     handleFiles(files) {
-        const allowedExtensions = ['.fasta', '.fa', '.fas', '.fna'];
-        const maxFileSize = 100 * 1024 * 1024; // 100MB
+        const fileArray = Array.from(files);
+        const validFiles = [];
         
-        Array.from(files).forEach(file => {
-            // Check file extension
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            if (!allowedExtensions.includes(fileExtension)) {
-                this.showError(`File "${file.name}" has an unsupported format. Please use FASTA files (.fasta, .fa, .fas, .fna).`);
-                return;
+        fileArray.forEach(file => {
+            if (this.validateFile(file)) {
+                validFiles.push(file);
             }
-            
-            // Check file size
-            if (file.size > maxFileSize) {
-                this.showError(`File "${file.name}" is too large. Maximum file size is 100MB.`);
-                return;
-            }
-            
-            // Check if file already exists
-            if (this.selectedFiles.some(f => f.name === file.name)) {
-                this.showError(`File "${file.name}" is already selected.`);
-                return;
-            }
-            
-            this.selectedFiles.push(file);
         });
         
-        if (this.selectedFiles.length > 0) {
-            this.updateFileList();
-            this.showFileOptions();
+        if (validFiles.length > 0) {
+            this.addFiles(validFiles);
+            this.showFileList();
+            this.showAnalysisOptions();
+            this.showUploadActions();
         }
     }
 
-    updateFileList() {
-        this.filesContainer.innerHTML = '';
+    validateFile(file) {
+        // Check file extension
+        const validExtensions = ['.fasta', '.fa', '.fas', '.fna'];
+        const fileName = file.name.toLowerCase();
+        const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
         
-        this.selectedFiles.forEach((file, index) => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.innerHTML = `
-                <div class="file-info">
-                    <div class="file-icon">
-                        <i class="fas fa-dna"></i>
-                    </div>
-                    <div class="file-details">
-                        <h5>${file.name}</h5>
-                        <p>${this.formatFileSize(file.size)} • ${this.getFileType(file.name)}</p>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="file-remove" onclick="uploadManager.removeFile(${index})" title="Remove file">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-            this.filesContainer.appendChild(fileItem);
-        });
-    }
-
-    removeFile(index) {
-        this.selectedFiles.splice(index, 1);
-        
-        if (this.selectedFiles.length === 0) {
-            this.hideFileOptions();
-        } else {
-            this.updateFileList();
+        if (!hasValidExtension) {
+            this.showError(`Invalid file format: ${file.name}. Please upload FASTA files (.fasta, .fa, .fas, .fna)`);
+            return false;
         }
+        
+        // Check file size (100MB limit)
+        const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+        if (file.size > maxSize) {
+            this.showError(`File too large: ${file.name}. Maximum size is 100MB.`);
+            return false;
+        }
+        
+        // Check if file already exists
+        const fileExists = this.uploadedFiles.some(existingFile => 
+            existingFile.name === file.name && existingFile.size === file.size
+        );
+        
+        if (fileExists) {
+            this.showError(`File already added: ${file.name}`);
+            return false;
+        }
+        
+        return true;
     }
 
-    showFileOptions() {
-        this.fileList.style.display = 'block';
-        this.analysisOptions.style.display = 'block';
-        this.uploadActions.style.display = 'flex';
+    addFiles(files) {
+        files.forEach(file => {
+            const fileObj = {
+                file: file,
+                name: file.name,
+                size: file.size,
+                id: this.generateFileId()
+            };
+            
+            this.uploadedFiles.push(fileObj);
+            this.renderFileItem(fileObj);
+        });
+        
+        this.showSuccess(`${files.length} file(s) added successfully`);
     }
 
-    hideFileOptions() {
-        this.fileList.style.display = 'none';
-        this.analysisOptions.style.display = 'none';
-        this.uploadActions.style.display = 'none';
+    generateFileId() {
+        return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    renderFileItem(fileObj) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.dataset.fileId = fileObj.id;
+        
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <div class="file-icon">
+                    <i class="fas fa-dna"></i>
+                </div>
+                <div class="file-details">
+                    <div class="file-name">${fileObj.name}</div>
+                    <div class="file-size">${this.formatFileSize(fileObj.size)}</div>
+                </div>
+            </div>
+            <button class="file-remove" data-file-id="${fileObj.id}">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Add remove event listener
+        const removeBtn = fileItem.querySelector('.file-remove');
+        removeBtn.addEventListener('click', () => this.removeFile(fileObj.id));
+        
+        this.filesContainer.appendChild(fileItem);
+    }
+
+    removeFile(fileId) {
+        // Remove from array
+        this.uploadedFiles = this.uploadedFiles.filter(file => file.id !== fileId);
+        
+        // Remove from DOM
+        const fileItem = document.querySelector(`[data-file-id="${fileId}"]`);
+        if (fileItem) {
+            fileItem.remove();
+        }
+        
+        // Hide sections if no files
+        if (this.uploadedFiles.length === 0) {
+            this.hideFileList();
+            this.hideAnalysisOptions();
+            this.hideUploadActions();
+        }
+        
+        this.showSuccess('File removed successfully');
     }
 
     clearFiles() {
-        this.selectedFiles = [];
-        this.fileInput.value = '';
-        this.hideFileOptions();
-        this.hideProgress();
+        this.uploadedFiles = [];
+        this.filesContainer.innerHTML = '';
+        this.hideFileList();
+        this.hideAnalysisOptions();
+        this.hideUploadActions();
         this.hideResults();
-        this.showSuccess('Files cleared successfully.');
+        this.hideProgress();
+        this.fileInput.value = '';
+        this.showSuccess('All files cleared');
     }
 
-    startAnalysis() {
-        if (this.selectedFiles.length === 0) {
-            this.showError('Please select at least one FASTA file to analyze.');
+    async startAnalysis() {
+        if (this.uploadedFiles.length === 0) {
+            this.showError('Please select at least one FASTA file');
             return;
         }
-
+        
         if (this.isAnalyzing) {
-            this.showError('Analysis is already in progress.');
+            this.showError('Analysis is already in progress');
             return;
         }
+        
+        try {
+            this.isAnalyzing = true;
+            this.analyzeBtn.disabled = true;
+            this.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+            
+            // Get analysis parameters
+            const params = this.getAnalysisParameters();
+            
+            // Show progress
+            this.showProgress();
+            
+            // Start analysis
+            await this.performAnalysis(params);
+            
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            this.showError('Analysis failed: ' + error.message);
+            this.hideProgress();
+        } finally {
+            this.isAnalyzing = false;
+            this.analyzeBtn.disabled = false;
+            this.analyzeBtn.innerHTML = '<i class="fas fa-play"></i> Start Analysis';
+        }
+    }
 
-        this.isAnalyzing = true;
-        this.showProgress();
-        this.simulateAnalysis();
+    getAnalysisParameters() {
+        return {
+            kmerSize: parseInt(document.getElementById('kmerSize').value),
+            confidenceThreshold: parseFloat(document.getElementById('confidenceThreshold').value),
+            outputFormat: document.getElementById('outputFormat').value,
+            includeVisualization: document.getElementById('includeVisualization').checked
+        };
+    }
+
+    async performAnalysis(params) {
+        // Check if MetagenomicsAnalyzer is available
+        if (typeof window.MetagenomicsAnalyzer === 'undefined') {
+            throw new Error('Metagenomic analysis module not found. Please ensure metagenomicAnalyze.js is loaded.');
+        }
+        
+        // Create analyzer instance
+        const analyzer = new window.MetagenomicsAnalyzer();
+        
+        // Update progress: Step 1 complete
+        this.updateProgressStep(1, true);
+        this.updateProgressStep(2, true);
+        this.updateProgress(25, 'Reading FASTA files...');
+        
+        // Prepare files array from uploaded files
+        const files = this.uploadedFiles.map(fileObj => fileObj.file);
+        
+        // Create progress callback to integrate with UI
+        const progressCallback = (progress) => {
+            let message = progress.message || 'Processing...';
+            let percentage = progress.progress || 0;
+            
+            // Map different phases to UI progress
+            switch (progress.phase) {
+                case 'reading_files':
+                    percentage = 25 + (percentage * 0.15); // 25-40%
+                    break;
+                case 'building_database':
+                    percentage = 40 + (percentage * 0.15); // 40-55%
+                    break;
+                case 'simulating_reads':
+                    percentage = 55 + (percentage * 0.1); // 55-65%
+                    break;
+                case 'classifying_reads':
+                    percentage = 65 + (percentage * 0.25); // 65-90%
+                    break;
+                case 'calculating_abundance':
+                    percentage = 90 + (percentage * 0.1); // 90-100%
+                    break;
+            }
+            
+            this.updateProgress(Math.round(percentage), message);
+        };
+        
+        try {
+            // Perform analysis using analyzeFiles method (not analyzeSequences)
+            const analysisResults = await analyzer.analyzeFiles(files, progressCallback);
+            
+            this.updateProgress(100, 'Analysis complete!');
+            this.updateProgressStep(3, true);
+            this.updateProgressStep(4, true);
+            
+            // Process results
+            this.analysisResults = this.processResults(analysisResults, params);
+            
+            // Show results after a brief delay
+            setTimeout(() => {
+                this.hideProgress();
+                this.showResults();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            this.updateProgress(0, `Analysis failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // Update processResults to handle the new structure
+    processResults(analysisResults, params) {
+        const timestamp = new Date().toISOString();
+        
+        return {
+            timestamp: timestamp,
+            parameters: params,
+            files: this.uploadedFiles.map(f => ({ name: f.name, size: f.size })),
+            results: analysisResults,
+            summary: this.generateResultsSummary(analysisResults)
+        };
+    }
+
+    // Update generateResultsSummary to match the actual structure
+    generateResultsSummary(results) {
+        const { statistics, abundance, metadata } = results;
+        
+        return {
+            totalSequences: metadata?.totalSequences || 0,
+            totalReads: statistics?.totalReads || 0,
+            classifiedReads: statistics?.classifiedReads || 0,
+            classificationRate: statistics?.totalReads > 0 ? 
+                ((statistics.classifiedReads / statistics.totalReads) * 100).toFixed(1) : 0,
+            uniqueSpecies: statistics?.uniqueSpecies || 0,
+            averageConfidence: statistics?.averageConfidence ? 
+                (statistics.averageConfidence * 100).toFixed(1) : 0,
+            topSpecies: abundance?.length > 0 ? abundance.slice(0, 10) : [],
+            kmerDatabaseSize: metadata?.kmerDatabaseSize || 0
+        };
+    }
+    
+    showResults() {
+        if (!this.analysisResults) return;
+        
+        const summary = this.analysisResults.summary;
+        
+        this.resultsSummary.innerHTML = `
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-dna"></i>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-value">${summary.totalSequences.toLocaleString()}</div>
+                        <div class="summary-label">Total Sequences</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-value">${summary.classifiedSequences.toLocaleString()}</div>
+                        <div class="summary-label">Classified</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-value">${summary.uniqueTaxa.toLocaleString()}</div>
+                        <div class="summary-label">Unique Taxa</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-value">${(summary.classificationRate * 100).toFixed(1)}%</div>
+                        <div class="summary-label">Success Rate</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.resultsSection.style.display = 'block';
+        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    previewResults() {
+        if (!this.analysisResults) {
+            this.showError('No results available to preview');
+            return;
+        }
+        
+        // Create preview modal or new window
+        const previewWindow = window.open('', '_blank', 'width=800,height=600');
+        const previewContent = this.generatePreviewHTML();
+        
+        previewWindow.document.write(previewContent);
+        previewWindow.document.close();
+    }
+
+    generatePreviewHTML() {
+        if (!this.analysisResults) return '';
+        
+        const results = this.analysisResults;
+        
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>MetaClassify Results Preview</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .header { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
+                    .summary { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                    .result-table { width: 100%; border-collapse: collapse; }
+                    .result-table th, .result-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    .result-table th { background-color: #007bff; color: white; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>MetaClassify Analysis Results</h1>
+                    <p>Generated on: ${new Date(results.timestamp).toLocaleString()}</p>
+                </div>
+                
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <p><strong>Files Analyzed:</strong> ${results.files.length}</p>
+                    <p><strong>Total Sequences:</strong> ${results.summary.totalSequences.toLocaleString()}</p>
+                    <p><strong>Classified Sequences:</strong> ${results.summary.classifiedSequences.toLocaleString()}</p>
+                    <p><strong>Classification Rate:</strong> ${(results.summary.classificationRate * 100).toFixed(2)}%</p>
+                    <p><strong>Unique Taxa:</strong> ${results.summary.uniqueTaxa}</p>
+                </div>
+                
+                <div class="parameters">
+                    <h2>Analysis Parameters</h2>
+                    <p><strong>K-mer Size:</strong> ${results.parameters.kmerSize}</p>
+                    <p><strong>Confidence Threshold:</strong> ${(results.parameters.confidenceThreshold * 100)}%</p>
+                    <p><strong>Output Format:</strong> ${results.parameters.outputFormat.toUpperCase()}</p>
+                </div>
+                
+                ${this.generateResultsTable(results.results)}
+            </body>
+            </html>
+        `;
+    }
+
+    generateResultsTable(results) {
+        // This should be customized based on your actual results structure
+        if (!results || !results.classifications) {
+            return '<p>No detailed results available.</p>';
+        }
+        
+        let tableHTML = `
+            <h2>Classification Results</h2>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>Sequence ID</th>
+                        <th>Classification</th>
+                        <th>Confidence</th>
+                        <th>Taxonomy</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        results.classifications.slice(0, 100).forEach(classification => {
+            tableHTML += `
+                <tr>
+                    <td>${classification.sequenceId || 'N/A'}</td>
+                    <td>${classification.classification || 'Unclassified'}</td>
+                    <td>${classification.confidence ? (classification.confidence * 100).toFixed(2) + '%' : 'N/A'}</td>
+                    <td>${classification.taxonomy || 'N/A'}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+            ${results.classifications.length > 100 ? '<p><em>Showing first 100 results. Download full results for complete data.</em></p>' : ''}
+        `;
+        
+        return tableHTML;
+    }
+
+    downloadResults() {
+        if (!this.analysisResults) {
+            this.showError('No results available to download');
+            return;
+        }
+        
+        const format = this.analysisResults.parameters.outputFormat;
+        const filename = `metaClassify_results_${Date.now()}.${format}`;
+        
+        let content;
+        let mimeType;
+        
+        switch (format) {
+            case 'json':
+                content = JSON.stringify(this.analysisResults, null, 2);
+                mimeType = 'application/json';
+                break;
+            case 'csv':
+                content = this.generateCSV(this.analysisResults);
+                mimeType = 'text/csv';
+                break;
+            case 'txt':
+                content = this.generateTXT(this.analysisResults);
+                mimeType = 'text/plain';
+                break;
+            default:
+                content = JSON.stringify(this.analysisResults, null, 2);
+                mimeType = 'application/json';
+        }
+        
+        this.downloadFile(content, filename, mimeType);
+    }
+
+    generateCSV(results) {
+        if (!results.results || !results.results.classifications) {
+            return 'No classification data available';
+        }
+        
+        let csv = 'Sequence ID,Classification,Confidence,Taxonomy,File\n';
+        
+        results.results.classifications.forEach(classification => {
+            const sequenceId = (classification.sequenceId || '').replace(/,/g, ';');
+            const classificationResult = (classification.classification || 'Unclassified').replace(/,/g, ';');
+            const confidence = classification.confidence ? (classification.confidence * 100).toFixed(2) : 'N/A';
+            const taxonomy = (classification.taxonomy || 'N/A').replace(/,/g, ';');
+            const filename = (classification.filename || '').replace(/,/g, ';');
+            
+            csv += `"${sequenceId}","${classificationResult}","${confidence}","${taxonomy}","${filename}"\n`;
+        });
+        
+        return csv;
+    }
+
+    generateTXT(results) {
+        let txt = 'MetaClassify Analysis Results\n';
+        txt += '================================\n\n';
+        txt += `Analysis Date: ${new Date(results.timestamp).toLocaleString()}\n`;
+        txt += `Files Analyzed: ${results.files.length}\n`;
+        txt += `Total Sequences: ${results.summary.totalSequences}\n`;
+        txt += `Classified Sequences: ${results.summary.classifiedSequences}\n`;
+        txt += `Classification Rate: ${(results.summary.classificationRate * 100).toFixed(2)}%\n`;
+        txt += `Unique Taxa: ${results.summary.uniqueTaxa}\n\n`;
+        
+        txt += 'Analysis Parameters:\n';
+        txt += `- K-mer Size: ${results.parameters.kmerSize}\n`;
+        txt += `- Confidence Threshold: ${(results.parameters.confidenceThreshold * 100)}%\n`;
+        txt += `- Output Format: ${results.parameters.outputFormat}\n\n`;
+        
+        if (results.results && results.results.classifications) {
+            txt += 'Classification Results:\n';
+            txt += '----------------------\n';
+            
+            results.results.classifications.forEach((classification, index) => {
+                txt += `${index + 1}. ${classification.sequenceId || 'Unknown'}\n`;
+                txt += `   Classification: ${classification.classification || 'Unclassified'}\n`;
+                txt += `   Confidence: ${classification.confidence ? (classification.confidence * 100).toFixed(2) + '%' : 'N/A'}\n`;
+                txt += `   Taxonomy: ${classification.taxonomy || 'N/A'}\n\n`;
+            });
+        }
+        
+        return txt;
+    }
+
+    downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        URL.revokeObjectURL(url);
+        this.showSuccess(`Results downloaded as ${filename}`);
+    }
+
+    showLoginPrompt() {
+        this.loginPrompt.style.display = 'block';
+    }
+
+    hideLoginPrompt() {
+        this.loginPrompt.style.display = 'none';
+    }
+
+    // Progress management
+    updateProgress(percent, status) {
+        this.progressFill.style.width = percent + '%';
+        this.progressPercent.textContent = percent + '%';
+        this.progressStatus.textContent = status;
+        
+        // Estimate time remaining (simple calculation)
+        const timeRemaining = Math.max(0, Math.ceil((100 - percent) / 10));
+        this.progressTime.textContent = `Estimated time: ${timeRemaining === 0 ? 'Almost done!' : timeRemaining + ' seconds'}`;
+    }
+
+    updateProgressStep(stepNumber, active) {
+        const step = this.progressSteps[`step${stepNumber}`];
+        if (step) {
+            if (active) {
+                step.classList.add('active');
+            } else {
+                step.classList.remove('active');
+            }
+        }
+    }
+
+    // UI utility methods
+    showFileList() {
+        this.fileList.style.display = 'block';
+    }
+
+    hideFileList() {
+        this.fileList.style.display = 'none';
+    }
+
+    showAnalysisOptions() {
+        this.analysisOptions.style.display = 'block';
+    }
+
+    hideAnalysisOptions() {
+        this.analysisOptions.style.display = 'none';
+    }
+
+    showUploadActions() {
+        this.uploadActions.style.display = 'block';
+    }
+
+    hideUploadActions() {
+        this.uploadActions.style.display = 'none';
     }
 
     showProgress() {
@@ -242,277 +716,63 @@ class UploadManager {
         this.progressSection.scrollIntoView({ behavior: 'smooth' });
         
         // Reset progress
-        this.progressFill.style.width = '0%';
-        this.progressPercent.textContent = '0%';
-        this.progressStatus.textContent = 'Preparing analysis...';
-        
-        // Reset steps
+        this.updateProgress(0, 'Initializing...');
         Object.values(this.progressSteps).forEach(step => {
-            step.classList.remove('active', 'completed');
+            step.classList.remove('active');
         });
-        this.progressSteps.step1.classList.add('active');
     }
 
     hideProgress() {
         this.progressSection.style.display = 'none';
     }
 
-    simulateAnalysis() {
-        let progress = 0;
-        const stages = [
-            { progress: 25, status: 'Validating FASTA files...', step: 'step1' },
-            { progress: 50, status: 'Extracting K-mers...', step: 'step2' },
-            { progress: 75, status: 'Classifying sequences...', step: 'step2' },
-            { progress: 90, status: 'Generating visualization...', step: 'step3' },
-            { progress: 100, status: 'Analysis complete!', step: 'step4' }
-        ];
-
-        let currentStage = 0;
-        const totalTime = 8000; // 8 seconds
-        const intervalTime = 200; // Update every 200ms
-        const progressIncrement = 100 / (totalTime / intervalTime);
-
-        this.progressInterval = setInterval(() => {
-            progress += progressIncrement;
-            
-            // Check if we've reached the next stage
-            if (currentStage < stages.length && progress >= stages[currentStage].progress) {
-                const stage = stages[currentStage];
-                this.progressStatus.textContent = stage.status;
-                this.updateProgressStep(stage.step);
-                currentStage++;
-            }
-            
-            // Update progress bar
-            const displayProgress = Math.min(progress, 100);
-            this.progressFill.style.width = `${displayProgress}%`;
-            this.progressPercent.textContent = `${Math.round(displayProgress)}%`;
-            
-            // Update estimated time
-            const remainingTime = Math.max(0, totalTime - (progress * totalTime / 100));
-            this.progressTime.textContent = `Estimated time: ${Math.ceil(remainingTime / 1000)}s`;
-            
-            // Complete analysis
-            if (progress >= 100) {
-                clearInterval(this.progressInterval);
-                this.completeAnalysis();
-            }
-        }, intervalTime);
-    }
-
-    updateProgressStep(stepId) {
-        // Mark previous steps as completed
-        Object.entries(this.progressSteps).forEach(([key, step]) => {
-            if (key < stepId) {
-                step.classList.remove('active');
-                step.classList.add('completed');
-            } else if (key === stepId) {
-                step.classList.add('active');
-            }
-        });
-    }
-
-    completeAnalysis() {
-        this.isAnalyzing = false;
-        this.progressSteps.step4.classList.add('completed');
-        this.progressSteps.step4.classList.remove('active');
-        
-        setTimeout(() => {
-            this.hideProgress();
-            this.showResults();
-        }, 1000);
-    }
-
     showResults() {
-        // Generate mock results
-        const totalSequences = this.selectedFiles.reduce((total, file) => {
-            return total + Math.floor(Math.random() * 1000) + 100;
-        }, 0);
-        
-        const classifiedSequences = Math.floor(totalSequences * 0.85);
-        const uniqueSpecies = Math.floor(Math.random() * 50) + 20;
-        const topGenus = ['Escherichia', 'Bacillus', 'Pseudomonas', 'Staphylococcus'][Math.floor(Math.random() * 4)];
-        
-        this.resultsSummary.innerHTML = `
-            <div class="summary-item">
-                <span class="summary-number">${totalSequences.toLocaleString()}</span>
-                <span class="summary-label">Total Sequences</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-number">${classifiedSequences.toLocaleString()}</span>
-                <span class="summary-label">Classified</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-number">${uniqueSpecies}</span>
-                <span class="summary-label">Unique Species</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-number">${topGenus}</span>
-                <span class="summary-label">Top Genus</span>
-            </div>
-        `;
-        
         this.resultsSection.style.display = 'block';
-        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
-        
-        this.showSuccess('Analysis completed successfully!');
     }
 
     hideResults() {
         this.resultsSection.style.display = 'none';
-        this.loginPrompt.style.display = 'none';
     }
 
-    previewResults() {
-        // Simulate opening results preview
-        const mockData = {
-            classification: 'Detailed classification results would be shown here...',
-            confidence: 'Confidence scores and quality metrics...',
-            visualization: 'Interactive charts and graphs...'
-        };
-        
-        alert('Results Preview:\n\n' + 
-              'This would open a detailed view of your analysis results including:\n' +
-              '• Taxonomic classification table\n' +
-              '• Confidence scores\n' +
-              '• Interactive visualizations\n' +
-              '• Quality metrics\n\n' +
-              'In a real implementation, this would open in a new window or modal.');
-    }
-
-    downloadResults() {
-        const outputFormat = document.getElementById('outputFormat').value;
-        const includeVisualization = document.getElementById('includeVisualization').checked;
-        
-        // Simulate file download
-        const filename = `metaClassify_results_${new Date().toISOString().split('T')[0]}.${outputFormat}`;
-        
-        // Create mock download content
-        let content = '';
-        if (outputFormat === 'csv') {
-            content = 'Sequence_ID,Classification,Confidence,Genus,Species\n';
-            content += 'seq_001,Bacteria;Proteobacteria;Gammaproteobacteria;Enterobacteriales;Enterobacteriaceae;Escherichia;coli,0.95,Escherichia,coli\n';
-            content += 'seq_002,Bacteria;Firmicutes;Bacilli;Bacillales;Bacillaceae;Bacillus;subtilis,0.88,Bacillus,subtilis\n';
-        } else if (outputFormat === 'json') {
-            content = JSON.stringify({
-                analysis_date: new Date().toISOString(),
-                total_sequences: 1247,
-                classified_sequences: 1060,
-                results: [
-                    {
-                        sequence_id: 'seq_001',
-                        classification: 'Bacteria;Proteobacteria;Gammaproteobacteria;Enterobacteriales;Enterobacteriaceae;Escherichia;coli',
-                        confidence: 0.95,
-                        genus: 'Escherichia',
-                        species: 'coli'
-                    }
-                ]
-            }, null, 2);
-        } else {
-            content = 'MetaClassify Analysis Results\n';
-            content += '==============================\n\n';
-            content += 'Analysis Date: ' + new Date().toISOString() + '\n';
-            content += 'Total Sequences: 1247\n';
-            content += 'Classified Sequences: 1060\n\n';
-            content += 'Top Classifications:\n';
-            content += '- Escherichia coli (45.2%)\n';
-            content += '- Bacillus subtilis (23.1%)\n';
-        }
-        
-        // Create and trigger download
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        this.showSuccess(`Results downloaded as ${filename}`);
-    }
-
-    saveResults() {
-        // Check if user is logged in (simulate)
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        if (!isLoggedIn) {
-            this.loginPrompt.style.display = 'block';
-            this.loginPrompt.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            // Simulate saving to user account
-            const savedAnalyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-            const newAnalysis = {
-                id: Date.now(),
-                date: new Date().toISOString(),
-                files: this.selectedFiles.map(f => f.name),
-                status: 'completed',
-                results: {
-                    totalSequences: 1247,
-                    classified: 1060,
-                    uniqueSpecies: 42
-                }
-            };
-            
-            savedAnalyses.push(newAnalysis);
-            localStorage.setItem('savedAnalyses', JSON.stringify(savedAnalyses));
-            
-            this.showSuccess('Results saved to your account successfully!');
-        }
-    }
-
-    continueWithoutLogin() {
-        this.loginPrompt.style.display = 'none';
-        this.showSuccess('You can download your results using the Download button.');
-    }
-
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    getFileType(filename) {
-        const extension = filename.split('.').pop().toLowerCase();
-        const types = {
-            'fasta': 'FASTA',
-            'fa': 'FASTA',
-            'fas': 'FASTA',
-            'fna': 'FASTA'
-        };
-        return types[extension] || 'Unknown';
+    // Toast notifications
+    showSuccess(message) {
+        this.showToast(this.successToast, message);
     }
 
     showError(message) {
-        this.errorToast.querySelector('.toast-message').textContent = message;
-        this.errorToast.classList.add('show');
+        this.showToast(this.errorToast, message);
+    }
+
+    showToast(toastElement, message) {
+        const messageElement = toastElement.querySelector('.toast-message');
+        messageElement.textContent = message;
         
+        toastElement.classList.add('show');
+        
+        // Auto hide after 5 seconds
         setTimeout(() => {
-            this.errorToast.classList.remove('show');
+            toastElement.classList.remove('show');
         }, 5000);
     }
 
-    showSuccess(message) {
-        this.successToast.querySelector('.toast-message').textContent = message;
-        this.successToast.classList.add('show');
+    // Utility methods
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
         
-        setTimeout(() => {
-            this.successToast.classList.remove('show');
-        }, 3000);
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 }
 
-// Initialize upload manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
     window.uploadManager = new UploadManager();
 });
 
-// Helper function for file removal (called from HTML)
-function removeFile(index) {
-    if (window.uploadManager) {
-        window.uploadManager.removeFile(index);
-    }
+// Export for potential external use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = UploadManager;
 }
