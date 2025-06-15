@@ -13,7 +13,6 @@ A web-based tool for metagenomic analysis and microbial classification using k-m
 ## Tech Stack
 
 - **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Python (Flask)
 - **Key Libraries**: 
   - BioPython (sequence analysis)
   - Matplotlib (visualization)
